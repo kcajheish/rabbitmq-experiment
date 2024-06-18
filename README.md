@@ -54,4 +54,66 @@ header exchange
 - Header exchange ignores routing key of the message and route them based on header.
 - x-match specifies whether all attributes should match or not.
 
-TBC
+Declare queue with attributes before you use the queue.
+- Attribute includes message TTL or queue length.
+
+queue name
+- 8 characters encoded with UTF. 255 bytes in total.
+- name is assigned to queue when you declare them. Queue name is retruend in the response.
+
+queue durability
+- For a durable queue, its meta data is persisted in the disk.
+- Publisher marks messages as persisted after messages are published to broker.
+- Messages/Queues are survived after queue restarts.
+
+binding
+- **Exchange** uses binding to route messages to bound queues based on routing keys.
+- A layer of indirection is on top of the queues.
+    - Engineers doesn't have to define routing rules in their code.
+- Messages are dropped or returned by **exchange** if messages can not be routed.
+    - e.g. queues are not bound to a exchange
+
+Consumers have two ways to consume messages from queues.
+1. subscribe(push api), so messages are delivered to it.
+    - Each queue can have multiple consumers or exclusive consumer.
+2. pull(pull api), extra process in application to get the messages. It is not recommended due to inefficiency.
+
+Each consumer has a consumer tag(identifier)
+- Use the tag to unsubscribe the queue.
+
+Messages are acknowledged in two modes
+1. automatic model
+    - Exchange acknowledged right after messages are delivered to the consumer.
+    - e.g. basic.deliver, basic.get-ok
+2. explicit model
+    - Consumer acknowledged to the queue after consumers receive/persist/process messages.
+    - Make sure persist/process operations is idempotent or the state of the data is immutable.
+    - e.g. basic.ack
+
+Requeue the messages or discard the messages when application can't process the message at specific app state.
+- Be aware of the app state that may create infinite messages delivery loop.
+- e.g. basic.reject
+
+App can acknowledge multiple messagse but can't reject multiple messages.
+- To do so, use **nack**
+
+Prefetch the messages. Multiple messages are pushed to the consumer before consumer acknowledges.
+- Improve throughput by saving round trip
+- Load balance. Some consumers may be slow. By setting the prefetch limit, busy consumer won't receive next batch of messages.
+
+messages
+- header
+    - Some fields used are by consumer.
+        - Content type: serializing method like json, protocol buffer...etc
+    - Some fields used by broker.
+- payload
+    - Broker won't inspect it.
+
+AMQP 0-9-1 Methods are operations that broker/client can do. They are grouped logically.
+- e.g. all methods related to exchange
+```
+exchange.declare
+exchange.declare-ok
+exchange.delete
+exchange.delete-ok
+```
